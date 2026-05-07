@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - IAT</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        title: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: { brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a' } }
+                }
+            }
+        }
+    </script>
+    <style>
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .toast-enter { transform: translateY(100%); opacity: 0; }
+        .toast-active { transform: translateY(0); opacity: 1; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="ui.navigate('index.html')">
+                <div class="bg-brand-600 text-white p-2 rounded-lg"><i data-lucide="calendar" class="w-5 h-5"></i></div>
+                <span class="font-title font-bold text-xl text-slate-900">IAT Agenda</span>
+            </div>
+            <div>
+                <button onclick="admin.logout()" class="text-sm font-medium text-slate-600 hover:text-red-600 flex items-center gap-1 transition-colors">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Keluar
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Admin Dashboard -->
+        <section class="fade-in">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                <div>
+                    <h1 class="font-title text-2xl sm:text-3xl font-extrabold text-slate-900">Dashboard Admin</h1>
+                    <p class="text-slate-500 text-sm">Kelola agenda dan sertifikat peserta.</p>
+                </div>
+                <button onclick="admin.logout()" class="text-sm px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium rounded-lg transition-colors flex items-center gap-2">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Keluar
+                </button>
+            </div>
+
+            <!-- Admin Tabs -->
+            <div class="flex border-b border-slate-200 mb-6 overflow-x-auto">
+                <button onclick="admin.switchTab('events')" id="tab-btn-events" class="admin-tab-btn px-6 py-3 font-medium text-brand-600 border-b-2 border-brand-600 whitespace-nowrap transition-colors">Daftar Event</button>
+                <button onclick="admin.switchTab('peserta')" id="tab-btn-peserta" class="admin-tab-btn px-6 py-3 font-medium text-slate-500 hover:text-slate-700 border-b-2 border-transparent whitespace-nowrap transition-colors">Data Pendaftar</button>
+                <button onclick="admin.switchTab('add')" id="tab-btn-add" class="admin-tab-btn px-6 py-3 font-medium text-slate-500 hover:text-slate-700 border-b-2 border-transparent whitespace-nowrap transition-colors">Tambah Event Baru</button>
+            </div>
+
+            <!-- Tab: Daftar Event -->
+            <div id="tab-events" class="admin-tab block bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-slate-500">
+                        <thead class="text-xs text-slate-700 uppercase bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th class="px-4 py-3 rounded-tl-lg font-semibold">Nama Event</th>
+                                <th class="px-4 py-3 font-semibold">Tanggal</th>
+                                <th class="px-4 py-3 font-semibold">Tempat</th>
+                                <th class="px-4 py-3 rounded-tr-lg font-semibold">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-admin-events" class="divide-y divide-slate-200">
+                            <!-- Data Event -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab: Data Pendaftar -->
+            <div id="tab-peserta" class="admin-tab hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex flex-col sm:flex-row gap-4 mb-6 items-end">
+                    <div class="flex-grow w-full">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Pilih Event</label>
+                        <select id="manage-event-select" onchange="admin.renderPesertaTable(true)" class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none bg-white">
+                            <option value="">-- Muat Data Event --</option>
+                        </select>
+                    </div>
+                    <button onclick="admin.sendCertificates()" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                        <i data-lucide="mail" class="w-4 h-4"></i> Distribusi Sertifikat
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto border border-slate-200 rounded-lg">
+                    <table class="w-full text-sm text-left text-slate-500">
+                        <thead class="text-xs text-slate-700 uppercase bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th class="px-4 py-3 font-semibold">No.</th>
+                                <th class="px-4 py-3 font-semibold">Nama Pendaftar</th>
+                                <th class="px-4 py-3 font-semibold">Kontak (Email/WA)</th>
+                                <th class="px-4 py-3 font-semibold">Instansi</th>
+                                <th class="px-4 py-3 font-semibold">Status Sertifikat</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-admin-peserta" class="divide-y divide-slate-200">
+                            <tr><td colspan="5" class="text-center py-6 text-slate-400">Pilih event terlebih dahulu untuk melihat data pendaftar.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Kontrol Pagination -->
+                <div class="flex items-center justify-between mt-4 px-2">
+                    <span id="pagination-info" class="text-sm text-slate-500 font-medium"></span>
+                    <div class="flex gap-2">
+                        <button id="btn-prev-page" onclick="admin.changePage(-1)" class="hidden px-3 py-1.5 text-sm font-medium border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Sebelumnya</button>
+                        <button id="btn-next-page" onclick="admin.changePage(1)" class="hidden px-3 py-1.5 text-sm font-medium border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Selanjutnya</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Tambah Event -->
+            <div id="tab-add" class="admin-tab hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <form id="form-add-event" onsubmit="admin.addEvent(event)">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Nama Event</label>
+                            <input type="text" id="add-nama" required class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Tema / Deskripsi Event</label>
+                            <textarea id="add-tema" rows="2" required class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Tempat / Platform</label>
+                            <input type="text" id="add-tempat" required class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none" placeholder="Zoom Meeting / Aula">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Tanggal Pelaksanaan</label>
+                            <input type="date" id="add-tanggal" required class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none">
+                        </div>
+                    </div>
+                    <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Simpan Event Baru
+                    </button>
+                </form>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Global Loading Overlay -->
+    <div id="overlay-loading" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex-col items-center justify-center">
+        <i data-lucide="loader-2" class="w-10 h-10 text-white animate-spin mb-3"></i>
+        <p id="loading-text" class="text-white font-medium text-sm text-center whitespace-pre-line">Memproses...</p>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3"></div>
+
+    <script src="assets/js/common-app.js"></script>
+    <script>
+        // ========================================
+        // ADMIN PAGE LOGIC
+        // ========================================
+
+        const admin = {
+            events: [],
+            allPeserta: [],
+            pesertaPage: 1,
+            pesertaPerPage: 10,
+
+            checkAuth: () => {
+                if (!sessionStorage.getItem('adminAuth')) {
+                    ui.showToast('Akses ditolak. Silakan login terlebih dahulu.', 'error');
+                    setTimeout(() => ui.navigate('login.html'), 1500);
+                    return false;
+                }
+                return true;
+            },
+
+            logout: () => {
+                sessionStorage.removeItem('adminAuth');
+                ui.showToast('Berhasil keluar');
+                setTimeout(() => ui.navigate('index.html'), 1000);
+            },
+
+            switchTab: (tabId) => {
+                document.querySelectorAll('.admin-tab').forEach(el => el.classList.add('hidden'));
+                document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+                
+                document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+                    btn.classList.remove('text-brand-600', 'border-brand-600');
+                    btn.classList.add('text-slate-500', 'border-transparent');
+                });
+                
+                const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+                activeBtn.classList.remove('text-slate-500', 'border-transparent');
+                activeBtn.classList.add('text-brand-600', 'border-brand-600');
+            },
+
+            loadAdminData: async () => {
+                ui.showLoading(true, 'Memuat data dashboard...');
+                const res = await api.call('getAdminData');
+                ui.showLoading(false);
+                
+                if (res.status === 'success') {
+                    admin.events = res.events || [];
+                    admin.allPeserta = res.peserta || [];
+                    admin.renderAdminEventsTable();
+                    admin.renderAdminSelect();
+                    admin.renderPesertaTable();
+                } else {
+                    ui.showToast('Gagal memuat data admin', 'error');
+                }
+            },
+
+            renderAdminEventsTable: () => {
+                const tbody = document.getElementById('table-admin-events');
+                tbody.innerHTML = '';
+                if(admin.events.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">Belum ada event yang dibuat.</td></tr>`;
+                    return;
+                }
+                admin.events.forEach(ev => {
+                    const tgl = utils.formatDateShort(ev.tanggal);
+                    
+                    const isActive = (ev.status === 'Aktif' || ev.status === 'Buka');
+                    const badgeClass = isActive ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600';
+                    const actionText = isActive ? 'Tutup Pendaftaran' : 'Buka Pendaftaran';
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50 transition-colors border-b border-slate-100">
+                            <td class="px-4 py-3 font-medium text-slate-900">${ev.nama}<br><span class="text-xs text-slate-500 font-normal">${ev.tema}</span></td>
+                            <td class="px-4 py-3">${tgl}</td>
+                            <td class="px-4 py-3">${ev.tempat}</td>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center gap-3">
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-md ${badgeClass}">${ev.status}</span>
+                                    <button onclick="admin.toggleEventStatus('${ev.id}', '${ev.status}')" class="text-xs text-brand-600 hover:text-brand-800 font-medium underline transition-colors">${actionText}</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+            },
+
+            toggleEventStatus: async (eventId, currentStatus) => {
+                const newStatus = (currentStatus === 'Aktif' || currentStatus === 'Buka') ? 'Tutup' : 'Aktif';
+                
+                ui.showLoading(true, `Mengubah status menjadi ${newStatus}...`);
+                const res = await api.call('updateEventStatus', { eventId: eventId, status: newStatus });
+                ui.showLoading(false);
+
+                if (res.status === 'success') {
+                    ui.showToast(`Status event berhasil diubah menjadi ${newStatus}`);
+                    admin.loadAdminData();
+                } else {
+                    ui.showToast(res.message || 'Gagal mengubah status event', 'error');
+                }
+            },
+
+            renderAdminSelect: () => {
+                const select = document.getElementById('manage-event-select');
+                const currVal = select.value;
+                select.innerHTML = '<option value="">-- Pilih Event --</option>';
+                admin.events.forEach(ev => {
+                    const tgl = utils.formatDateShort(ev.tanggal);
+                    select.innerHTML += `<option value="${ev.id}">${ev.nama} (${tgl})</option>`;
+                });
+                if(currVal) select.value = currVal;
+            },
+
+            renderPesertaTable: (resetPage = false) => {
+                if (resetPage) admin.pesertaPage = 1;
+
+                const eventId = document.getElementById('manage-event-select').value;
+                const tbody = document.getElementById('table-admin-peserta');
+                const paginationInfo = document.getElementById('pagination-info');
+                const btnPrev = document.getElementById('btn-prev-page');
+                const btnNext = document.getElementById('btn-next-page');
+
+                tbody.innerHTML = '';
+
+                if(!eventId) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">Pilih event terlebih dahulu untuk melihat data pendaftar.</td></tr>`;
+                    paginationInfo.innerText = '';
+                    btnPrev.classList.add('hidden');
+                    btnNext.classList.add('hidden');
+                    return;
+                }
+
+                const filteredPeserta = admin.allPeserta.filter(p => p.eventId === eventId);
+                
+                if(filteredPeserta.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">Belum ada pendaftar pada event ini.</td></tr>`;
+                    paginationInfo.innerText = '0 Pendaftar';
+                    btnPrev.classList.add('hidden');
+                    btnNext.classList.add('hidden');
+                    return;
+                }
+
+                const totalItems = filteredPeserta.length;
+                const totalPages = Math.ceil(totalItems / admin.pesertaPerPage);
+                
+                if (admin.pesertaPage > totalPages) admin.pesertaPage = totalPages;
+                if (admin.pesertaPage < 1) admin.pesertaPage = 1;
+
+                const startIndex = (admin.pesertaPage - 1) * admin.pesertaPerPage;
+                const endIndex = startIndex + admin.pesertaPerPage;
+                const paginatedPeserta = filteredPeserta.slice(startIndex, endIndex);
+
+                paginatedPeserta.forEach((p, idx) => {
+                    const isTerkirim = (p.status || '').toString().includes('Terkirim');
+                    const statusCert = isTerkirim
+                        ? `<span class="inline-flex items-center gap-1 text-green-600 font-medium"><i data-lucide="check-circle-2" class="w-4 h-4"></i> Terkirim</span>`
+                        : `<span class="inline-flex items-center gap-1 text-slate-400"><i data-lucide="clock" class="w-4 h-4"></i> Belum</span>`;
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50 transition-colors border-b border-slate-100">
+                            <td class="px-4 py-3 text-slate-500 font-medium">${startIndex + idx + 1}.</td>
+                            <td class="px-4 py-3 font-medium text-slate-900">${p.nama}</td>
+                            <td class="px-4 py-3 text-sm">${p.email}<br><span class="text-xs text-slate-500">${p.whatsapp}</span></td>
+                            <td class="px-4 py-3">${p.institusi}</td>
+                            <td class="px-4 py-3">${statusCert}</td>
+                        </tr>
+                    `;
+                });
+
+                const endItem = Math.min(endIndex, totalItems);
+                paginationInfo.innerText = `Menampilkan ${startIndex + 1}-${endItem} dari ${totalItems} Pendaftar`;
+                
+                btnPrev.classList.remove('hidden');
+                btnNext.classList.remove('hidden');
+                btnPrev.disabled = admin.pesertaPage <= 1;
+                btnNext.disabled = admin.pesertaPage >= totalPages;
+
+                lucide.createIcons();
+            },
+
+            changePage: (direction) => {
+                admin.pesertaPage += direction;
+                admin.renderPesertaTable();
+            },
+
+            addEvent: async (e) => {
+                e.preventDefault();
+                const payload = {
+                    namaEvent: document.getElementById('add-nama').value,
+                    temaEvent: document.getElementById('add-tema').value,
+                    tempat: document.getElementById('add-tempat').value,
+                    tanggal: document.getElementById('add-tanggal').value
+                };
+
+                ui.showLoading(true, 'Menyimpan event...');
+                const res = await api.call('addEvent', payload);
+                ui.showLoading(false);
+
+                if (res.status === 'success') {
+                    ui.showToast('Event berhasil ditambahkan!');
+                    document.getElementById('form-add-event').reset();
+                    admin.loadAdminData();
+                } else {
+                    ui.showToast(res.message || 'Gagal menyimpan', 'error');
+                }
+            },
+
+            sendCertificates: async () => {
+                const eventId = document.getElementById('manage-event-select').value;
+                if (!eventId) return ui.showToast('Harap pilih event terlebih dahulu', 'error');
+                
+                const filteredPeserta = admin.allPeserta.filter(p => p.eventId === eventId);
+                const toSend = filteredPeserta.filter(p => !(p.status || '').toString().includes('Terkirim'));
+                const totalToSend = toSend.length;
+
+                if (totalToSend === 0) {
+                    return ui.showToast('Semua peserta pada event ini sudah menerima sertifikat!', 'error');
+                }
+                
+                if(!confirm(`Terdapat ${totalToSend} peserta yang belum menerima sertifikat.\nMulai generate dan kirim PDF sekarang?\n\n(Catatan: Jangan tutup halaman saat loading berjalan)`)) return;
+
+                let currentProgress = 0;
+                ui.showLoading(true, `Memproses Sertifikat (0/${totalToSend})...\nMohon tunggu di halaman ini.`);
+
+                const progressInterval = setInterval(() => {
+                    if (currentProgress < totalToSend - 1) {
+                        currentProgress++;
+                        document.getElementById('loading-text').innerText = `Memproses Sertifikat (${currentProgress}/${totalToSend})...\nMohon tunggu di halaman ini.`;
+                    }
+                }, 4000); 
+
+                try {
+                    const res = await api.call('sendCertificates', { eventId });
+                    
+                    clearInterval(progressInterval);
+                    ui.showLoading(false);
+
+                    if (res.status === 'success') {
+                        ui.showToast(res.message || `Berhasil mengirim ${totalToSend} sertifikat!`);
+                        admin.loadAdminData();
+                    } else {
+                        ui.showToast(res.message || 'Terjadi kesalahan sistem', 'error');
+                    }
+                } catch (error) {
+                    clearInterval(progressInterval);
+                    ui.showLoading(false);
+                    ui.showToast('Terjadi kesalahan server (Time-out). Silakan muat ulang halaman.', 'error');
+                }
+            }
+        };
+
+        // Check auth and load data when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('service-worker.js');
+            }
+
+            if (admin.checkAuth()) {
+                admin.loadAdminData();
+            }
+        });
+    </script>
+</body>
+</html>

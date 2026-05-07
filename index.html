@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda & Pendaftaran IAT</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%232563eb' width='180' height='180'/><text x='50%' y='50%' font-size='80' font-weight='bold' fill='white' text-anchor='middle' dy='.3em'>IAT</text></svg>">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        title: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: { brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a' } }
+                }
+            }
+        }
+    </script>
+    <style>
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .toast-enter { transform: translateY(100%); opacity: 0; }
+        .toast-active { transform: translateY(0); opacity: 1; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="ui.navigate('index.html')">
+                <div class="bg-brand-600 text-white p-2 rounded-lg"><i data-lucide="calendar" class="w-5 h-5"></i></div>
+                <span class="font-title font-bold text-xl text-slate-900">IAT Agenda</span>
+            </div>
+            <div>
+                <button onclick="ui.navigate('login.html')" class="text-sm font-medium text-slate-600 hover:text-brand-600 flex items-center gap-1 transition-colors">
+                    <i data-lucide="shield" class="w-4 h-4"></i> Admin Panel
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Home Section -->
+        <section class="fade-in">
+            <div class="text-center mb-10">
+                <h1 class="font-title text-3xl sm:text-4xl font-extrabold text-slate-900 mb-3">Agenda & Event Mendatang</h1>
+                <p class="text-slate-500 max-w-2xl mx-auto">Daftarkan diri Anda pada berbagai kegiatan menarik yang diselenggarakan oleh Ikatan Alumni.</p>
+            </div>
+            
+            <div id="event-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Event Cards akan dimuat di sini -->
+            </div>
+            
+            <div id="empty-event" class="hidden text-center py-12">
+                <div class="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+                    <i data-lucide="calendar-x" class="w-8 h-8"></i>
+                </div>
+                <h3 class="font-title font-semibold text-lg">Belum Ada Event Aktif</h3>
+                <p class="text-slate-500 text-sm mt-1">Silakan kembali lagi nanti.</p>
+            </div>
+
+            <!-- Fitur Validasi Sertifikat -->
+            <div class="mt-16 bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center max-w-2xl mx-auto">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-brand-100 text-brand-600 mb-4">
+                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                </div>
+                <h2 class="font-title text-2xl font-bold text-slate-900 mb-2">Validasi Sertifikat</h2>
+                <p class="text-slate-500 mb-6 text-sm">Masukkan ID Sertifikat (CertID) Anda untuk memverifikasi keaslian sertifikat dan mengunduhnya.</p>
+                
+                <form onsubmit="home.validateCertificate(event)" class="flex flex-col sm:flex-row gap-3">
+                    <input type="text" id="input-cert-id" required placeholder="Contoh: IAT-1234-ABCD" class="flex-grow px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none uppercase tracking-wide">
+                    <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors whitespace-nowrap flex items-center justify-center gap-2">
+                        <i data-lucide="search" class="w-4 h-4"></i> Cek
+                    </button>
+                </form>
+
+                <!-- Hasil Validasi -->
+                <div id="validasi-result" class="hidden mt-6 text-left border border-green-200 bg-green-50 rounded-xl p-5 fade-in">
+                    <div class="flex items-start gap-3">
+                        <i data-lucide="badge-check" class="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5"></i>
+                        <div class="flex-grow">
+                            <h3 class="text-green-800 font-bold mb-1">Sertifikat Tervalidasi Resmi</h3>
+                            <p class="text-sm text-green-700 mb-3">Sertifikat ini terdaftar dalam sistem Ikatan Alumni dengan rincian:</p>
+                            <div class="bg-white rounded-lg p-3 border border-green-100 mb-3 text-sm">
+                                <table class="w-full">
+                                    <tr><td class="text-slate-500 py-1 w-20">Nama</td><td class="font-semibold text-slate-900 break-words" id="val-nama">: -</td></tr>
+                                    <tr><td class="text-slate-500 py-1">Instansi</td><td class="font-semibold text-slate-900 break-words" id="val-instansi">: -</td></tr>
+                                    <tr><td class="text-slate-500 py-1 align-top">Event</td><td class="font-semibold text-slate-900 break-words" id="val-event">: -</td></tr>
+                                </table>
+                            </div>
+                            <a href="#" id="val-download" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                <i data-lucide="download" class="w-4 h-4"></i> Unduh PDF
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="validasi-error" class="hidden mt-6 border border-red-200 bg-red-50 rounded-xl p-4 fade-in text-red-700 text-sm font-medium flex items-center justify-center gap-2">
+                    <i data-lucide="x-circle" class="w-5 h-5 flex-shrink-0"></i>
+                    <span id="val-error-msg">Sertifikat tidak ditemukan.</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Global Loading Overlay -->
+    <div id="overlay-loading" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex-col items-center justify-center">
+        <i data-lucide="loader-2" class="w-10 h-10 text-white animate-spin mb-3"></i>
+        <p id="loading-text" class="text-white font-medium text-sm text-center whitespace-pre-line">Memproses...</p>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3"></div>
+
+    <script src="assets/js/common-app.js"></script>
+    <script>
+        // ========================================
+        // HOME PAGE LOGIC
+        // ========================================
+
+        const home = {
+            events: [],
+
+            loadEvents: async () => {
+                ui.showLoading(true, 'Memuat daftar event...');
+                const res = await api.call('getEvents', {}, 'GET');
+                ui.showLoading(false);
+
+                if (res.status === 'success') {
+                    home.events = res.data;
+                    home.renderEvents();
+                } else {
+                    ui.showToast('Gagal memuat event', 'error');
+                }
+            },
+
+            renderEvents: () => {
+                const grid = document.getElementById('event-grid');
+                const emptyState = document.getElementById('empty-event');
+                grid.innerHTML = '';
+
+                if (!home.events || home.events.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                emptyState.classList.add('hidden');
+                home.events.forEach(ev => {
+                    const isOpen = ev.status === 'Aktif' || ev.status === 'Buka';
+                    const badgeClass = isOpen ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600';
+                    const btnHtml = isOpen 
+                        ? `<button onclick="home.openRegister('${ev.id}')" class="mt-4 w-full bg-brand-50 hover:bg-brand-100 text-brand-700 font-semibold py-2 rounded-lg transition-colors text-sm">Daftar Sekarang</button>`
+                        : `<button disabled class="mt-4 w-full bg-slate-100 text-slate-400 cursor-not-allowed font-semibold py-2 rounded-lg text-sm">Pendaftaran Ditutup</button>`;
+
+                    const formattedDate = utils.formatDate(ev.tanggal);
+
+                    grid.innerHTML += `
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col h-full hover:shadow-md transition-shadow">
+                            <div class="flex justify-between items-start mb-3">
+                                <span class="px-2.5 py-1 text-xs font-semibold rounded-md ${badgeClass}">${ev.status}</span>
+                                <span class="text-xs text-slate-500 font-medium bg-slate-50 px-2 py-1 border border-slate-100 rounded-md"><i data-lucide="calendar-days" class="w-3 h-3 inline mr-1"></i>${formattedDate}</span>
+                            </div>
+                            <h3 class="font-title font-bold text-lg text-slate-900 mb-1 leading-tight">${ev.nama}</h3>
+                            <p class="text-brand-600 text-xs font-semibold mb-2">${ev.tema}</p>
+                            <p class="text-slate-500 text-sm flex-grow"><i data-lucide="map-pin" class="w-3 h-3 inline mr-1"></i>${ev.tempat}</p>
+                            ${btnHtml}
+                        </div>
+                    `;
+                });
+                lucide.createIcons(); 
+            },
+
+            openRegister: (eventId) => {
+                const ev = home.events.find(e => e.id === eventId);
+                if (!ev) return;
+                
+                // Pass event data via URL parameters
+                const params = new URLSearchParams({
+                    eventId: ev.id,
+                    eventName: ev.nama,
+                    eventTema: ev.tema,
+                    eventTempat: ev.tempat,
+                    eventTanggal: ev.tanggal
+                });
+                
+                window.location.href = `register.html?${params.toString()}`;
+            },
+
+            validateCertificate: async (e) => {
+                e.preventDefault();
+                const certId = document.getElementById('input-cert-id').value.trim().toUpperCase();
+                
+                ui.showLoading(true, 'Memvalidasi Sertifikat...');
+                const res = await api.call('validateCert', { certId: certId });
+                ui.showLoading(false);
+
+                const divResult = document.getElementById('validasi-result');
+                const divError = document.getElementById('validasi-error');
+                
+                divResult.classList.add('hidden');
+                divError.classList.add('hidden');
+
+                if (res.status === 'success') {
+                    document.getElementById('val-nama').innerText = `: ${res.data.nama}`;
+                    document.getElementById('val-instansi').innerText = `: ${res.data.institusi}`;
+                    document.getElementById('val-event').innerText = `: ${res.data.namaEvent}`;
+                    document.getElementById('val-download').href = res.data.pdfUrl;
+                    
+                    divResult.classList.remove('hidden');
+                } else {
+                    document.getElementById('val-error-msg').innerText = res.message || 'Sertifikat tidak ditemukan.';
+                    divError.classList.remove('hidden');
+                }
+                lucide.createIcons();
+            }
+        };
+
+        // Load events when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            // Register service worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('service-worker.js');
+            }
+            home.loadEvents();
+        });
+    </script>
+</body>
+</html>
