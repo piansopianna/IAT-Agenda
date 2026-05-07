@@ -1,6 +1,6 @@
-# IAT Agenda MPA - Multi-Page Application
+# IAT Agenda
 
-Aplikasi MPA (Multi-Page Application) untuk sistem pendaftaran event dan validasi sertifikat Ikatan Alumni dengan dukungan Progressive Web Apps (PWA).
+Aplikasi untuk sistem pendaftaran event dan validasi sertifikat Prodi Ilmu Al-Qur'an dan Tafsir dengan dukungan Progressive Web Apps (PWA).
 
 ## 📋 Daftar Isi
 
@@ -331,7 +331,7 @@ https://xxx-yyy-zzz.ngrok.io
 
 ## 📝 Lisensi
 
-Proprietary - Ikatan Alumni
+Proprietary - Prodi Ilmu Al-Qur'an dan Tafsir
 
 ## 👨‍💻 Support
 
