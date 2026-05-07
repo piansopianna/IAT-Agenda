@@ -4,7 +4,7 @@
 // ========================================
 
 // ⚠️ GANTI SCRIPT_URL INI DENGAN URL WEB APP MILIK ANDA
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwD1xFvKFOPTHVt5b05aadqQ7TrK0cwlvokFdeDUkkmn_3nnLwvIvEDI4wnESAhhw7C2A/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/......................../exec';
 
 // ========================================
 // API CONNECTOR
